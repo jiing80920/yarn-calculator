@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>織造用紗計算機</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f4ef;--card:#fff;--text:#222;--mute:#6b6b6b;--line:#ddd8cc;--accent:#2f5d62;--accent-t:#fff;--warn:#b3261e;--ok:#2e7d32;--res:#eaf1f1;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171a1a;--card:#222727;--text:#eee;--mute:#a0a8a8;--line:#394040;--accent:#7fb5ba;--accent-t:#102022;--warn:#ff8a80;--ok:#81c784;--res:#1c3033;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#171a1a;--card:#222727;--text:#eee;--mute:#a0a8a8;--line:#394040;--accent:#7fb5ba;--accent-t:#102022;--warn:#ff8a80;--ok:#81c784;--res:#1c3033;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.5}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.4rem;margin:0 0 4px}
+.sub{color:var(--mute);font-size:.85rem;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:1rem;margin:0 0 12px;color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:4px}
+input{width:100%;font-size:1rem;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)}
+input:focus{outline:2px solid var(--accent);border-color:transparent}
+.res{margin-top:12px;padding:12px;background:var(--res);border-radius:10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.res span{font-size:.85rem;color:var(--mute)}
+.res b{font-size:1.4rem;font-variant-numeric:tabular-nums}
+.f{font-size:.78rem;color:var(--mute);margin-top:6px}
+.pull{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.pull input{flex:1}
+.pull .n{color:var(--mute);font-size:.85rem;width:1.6em;text-align:center}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);padding:9px 12px}
+button.add{background:var(--accent);color:var(--accent-t);border-color:var(--accent);width:100%;margin-top:4px}
+button.x{padding:9px 11px;color:var(--warn)}
+.final{border:2px solid var(--accent)}
+.final .res b{font-size:1.8rem}
+.tag{font-size:.9rem;margin-top:8px;font-weight:600}
+.warn{color:var(--warn)}.ok{color:var(--ok)}
+.sep{border-top:1px dashed var(--line);margin:16px 0 12px;padding-top:12px}
+.iw{display:flex;gap:6px}.iw input,.pull input{flex:1;min-width:0}
+button.sg{padding:9px 10px;font-weight:600;color:var(--accent)}
+button.cp{padding:9px 10px;color:var(--accent)}
+.clr{display:block;margin:14px 0 0 auto;font-size:.82rem;padding:6px 10px;color:var(--warn)}
+.reset{background:none;border:none;color:var(--mute);text-decoration:underline;display:block;margin:6px auto 0}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+td{padding:8px 4px;border-bottom:1px solid var(--line)}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+tr.hl td{background:var(--res)}
+tr:last-child td{border-bottom:none}
+td small{display:block;color:var(--mute);font-weight:400;font-size:.75rem}
+details.card summary{cursor:pointer;font-size:1rem;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:8px;list-style:none}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:"▾";transition:transform .2s}
+details.card[open] summary::after{transform:rotate(180deg)}
+details.card[open] summary{margin-bottom:12px}
+.badge,#cmpBadge{margin-left:auto;font-size:.85rem;color:var(--mute);font-weight:400}
+</style>
+</head>
+<body>
+<main>
+<h1>織造用紗計算機</h1>
+<p class="sub">依序填入數值，結果會即時更新。</p>
+
+<details class="card" open>
+<summary>① 成品長度 <span class="badge" id="b1"></span></summary>
+<div class="row">
+<div><label for="len">盤頭長</label><input id="len" type="number" inputmode="decimal" step="any" placeholder="例：1000"></div>
+<div><label for="shr">織縮 (%)</label><input id="shr" type="number" inputmode="decimal" step="any" placeholder="例：5"></div>
+</div>
+<div class="res"><span>成品長度</span><b id="o1">—</b></div>
+<div class="f" id="shrNote"></div>
+<button class="clr" type="button" data-clr="1">清除此項資料</button>
+</details>
+
+<details class="card" open>
+<summary>② 所需用紗量 <span class="badge" id="b2"></span></summary>
+<div class="row">
+<div><label for="qty">成品數量（自動帶入，可直接修改）</label><input id="qty" type="number" inputmode="decimal" step="any" placeholder="例：500"></div>
+<div><label for="wy">緯紗用紗量 (kg)</label><input id="wy" type="number" inputmode="decimal" step="any" placeholder="例：0.35"></div>
+</div>
+<div class="res"><span>所需用紗量</span><b id="o2">—</b></div>
+<button class="clr" type="button" data-clr="2">清除此項資料</button>
+</details>
+
+<section class="card final">
+<h2>③ 剩餘未領量</h2>
+<label>領用紗量 (kg)（可多筆）</label>
+<div id="pulls"></div>
+<button class="add" id="addL" type="button">＋ 新增一筆領用</button>
+<div class="f" id="pullSum">領用合計：0 kg</div>
+<div class="res"><span>剩餘未領量</span><b id="o3">—</b></div>
+<div class="tag" id="tag3"></div>
+<button class="clr" type="button" data-clr="3">清除此項資料</button>
+</section>
+
+<section class="card">
+<h2>④ 目前已用紗量</h2>
+<label>已生產數量 (碼)（可多筆）</label>
+<div id="prods"></div>
+<button class="add" id="addP" type="button">＋ 新增一筆生產</button>
+<div class="f" id="prodSum">已生產累計：0</div>
+<div class="res"><span>已用紗量</span><b id="o4a">—</b></div>
+<div class="res"><span>廠內應餘紗</span><b id="o4b">—</b></div>
+
+<div class="sep">
+<label>廠內庫存量 (kg)（可多筆，與廠內應餘紗比對）</label>
+<div id="stks"></div>
+<button class="add" id="addS" type="button">＋ 新增一筆庫存</button>
+<div class="f" id="stkSum">庫存合計：0 kg</div>
+<div class="res"><span>比對差異 = 庫存合計 − 廠內應餘紗</span><b id="o4c">—</b></div>
+<div class="tag" id="tag4"></div>
+<div class="res"><span>實際用紗量</span><b id="o4d">—</b></div>
+</div>
+<button class="clr" type="button" data-clr="4">清除此項資料</button>
+</section>
+
+<details class="card" id="cmp">
+<summary>⑤ 數值總覽 <span id="cmpBadge"></span></summary>
+<table>
+<tr><td>所需用紗量</td><td id="c1">—</td></tr>
+<tr><td>領用合計</td><td id="c2">—</td></tr>
+<tr><td>剩餘未領量<small>領用 − 所需</small></td><td id="c3">—</td></tr>
+<tr><td>目前已用紗量</td><td id="c4">—</td></tr>
+<tr><td>廠內應餘紗<small>領用 − 已用</small></td><td id="c5">—</td></tr>
+<tr><td>廠內庫存合計</td><td id="c6">—</td></tr>
+<tr><td>實際用紗量<small>(領用 − 庫存) ÷ 已生產碼數</small></td><td id="c8">—</td></tr>
+<tr class="hl"><td>庫存比對差異<small>庫存合計 − 廠內應餘紗</small></td><td id="c7">—</td></tr>
+</table>
+</details>
+<button class="reset" id="reset" type="button">全部清除</button>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n};
+const r4=n=>Math.round(n*10000)/10000;
+const fmt=n=>n===null?'—':r4(n).toLocaleString('zh-TW',{maximumFractionDigits:4});
+const kg=n=>n===null?'—':fmt(n)+' kg';
+const sum=a=>a.reduce((x,y)=>x+y,0);
+let qtyManual=false;
+function clean(i){i.addEventListener('input',()=>{const v=i.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1');if(v!==i.value)i.value=v})}
+
+
+function mkList(box,ph){
+  const renum=()=>[...box.children].forEach((d,k)=>d.querySelector('.n').textContent=k+1);
+  const add=(val,after)=>{
+    const d=document.createElement('div');d.className='pull';
+    d.innerHTML='<span class="n"></span><input type="text" inputmode="decimal" placeholder="'+ph+'"><button class="cp" type="button" aria-label="複製">⧉</button><button class="x" type="button" aria-label="刪除">✕</button>';
+    const i=d.querySelector('input');clean(i);i.addEventListener('input',calc);
+    if(val!==undefined)i.value=val;
+    d.querySelector('.cp').onclick=()=>{const n=add(i.value,d);calc();n.focus()};
+    d.querySelector('.x').onclick=()=>{if(box.children.length>1)d.remove();else i.value='';renum();calc()};
+    if(after)after.insertAdjacentElement('afterend',d);else box.appendChild(d);renum();return i;
+  };
+  return {add,vals:()=>[...box.querySelectorAll('input')].map(i=>num(i.value)||0),clear:()=>{box.innerHTML='';add()}};
+}
+const L=mkList($('pulls'),'領用量 (kg)'),P=mkList($('prods'),'已生產數量 (碼)'),S=mkList($('stks'),'庫存量 (kg)');
+
+function setTag(el,txt,cls){el.textContent=txt;el.className='tag '+cls}
+
+function calc(){
+  // ① 成品長度
+  const len=num($('len').value),s=num($('shr').value);
+  const fin=(len!==null&&s!==null)?len*(1-s/100):null;
+  $('o1').textContent=fmt(fin);
+  $('b1').textContent=fin===null?'':fmt(fin);
+  const qe=$('qty');
+  if(!qtyManual){qe.value=fin===null?'':r4(fin)}
+  $('shrNote').textContent=qtyManual?'成品數量為手動輸入；清空該欄即可恢復自動帶入。':'成品長度會自動帶入「成品數量」。';
+  // ② 所需用紗量
+  const q=num(qe.value),w=num($('wy').value);
+  const need=(q!==null&&w!==null)?q*w:null;
+  $('o2').textContent=kg(need);
+  $('b2').textContent=need===null?'':kg(need);
+  // ③ 剩餘未領量 = 領用 − 所需
+  const pull=sum(L.vals());
+  $('pullSum').textContent='領用合計：'+kg(pull);
+  const rem=need!==null?pull-need:null;
+  $('o3').textContent=kg(rem);
+  if(rem===null)setTag($('tag3'),'','');
+  else if(r4(rem)<0)setTag($('tag3'),'尚欠領 '+kg(-rem),'warn');
+  else if(r4(rem)===0)setTag($('tag3'),'剛好領足','ok');
+  else setTag($('tag3'),'已多領 '+kg(rem),'ok');
+  // ④ 已用、廠內餘紗、庫存比對
+  const made=sum(P.vals());
+  $('prodSum').textContent='已生產累計：'+fmt(made);
+  const used=(w!==null)?made*w:null;
+  const left=used!==null?pull-used:null;
+  $('o4a').textContent=kg(used);
+  $('o4b').textContent=kg(left);
+  const stk=sum(S.vals());
+  $('stkSum').textContent='庫存合計：'+kg(stk);
+  const diff=left!==null?stk-left:null;
+  $('o4c').textContent=kg(diff);
+  const act=(made>0)?(pull-stk)/made:null;
+  const actTxt=fmt(act);
+  $('o4d').textContent=actTxt;
+  $('c8').textContent=actTxt;
+  if(diff===null)setTag($('tag4'),'','');
+  else if(r4(diff)===0)setTag($('tag4'),'✓ 庫存與廠內應餘紗相符','ok');
+  else if(diff>0)setTag($('tag4'),'庫存比廠內應餘紗多 '+kg(diff),'warn');
+  else setTag($('tag4'),'庫存比廠內應餘紗少 '+kg(-diff),'warn');
+  // ⑤ 總覽
+  $('c1').textContent=kg(need);$('c2').textContent=kg(pull);$('c3').textContent=kg(rem);
+  $('c4').textContent=kg(used);$('c5').textContent=kg(left);$('c6').textContent=kg(stk);
+  $('c7').textContent=kg(diff);
+  $('cmpBadge').textContent=diff===null?'':'差異 '+kg(diff);
+}
+
+['len','shr','qty','wy'].forEach(id=>{
+  const el=$(id);el.type='text';el.removeAttribute('step');
+  const w=document.createElement('div');w.className='iw';el.parentNode.insertBefore(w,el);w.appendChild(el);
+  clean(el);
+});
+$('qty').addEventListener('input',()=>{qtyManual=$('qty').value.trim()!==''});
+['len','shr','qty','wy'].forEach(id=>$(id).addEventListener('input',calc));
+$('addL').onclick=()=>{L.add().focus()};
+$('addP').onclick=()=>{P.add().focus()};
+$('addS').onclick=()=>{S.add().focus()};
+const clr={
+  1:()=>{$('len').value='';$('shr').value=''},
+  2:()=>{qtyManual=false;$('qty').value='';$('wy').value=''},
+  3:()=>L.clear(),
+  4:()=>{P.clear();S.clear()}
+};
+document.querySelectorAll('[data-clr]').forEach(b=>b.onclick=()=>{clr[b.dataset.clr]();calc()});
+$('reset').onclick=()=>{
+  qtyManual=false;
+  ['len','shr','qty','wy'].forEach(id=>$(id).value='');
+  L.clear();P.clear();S.clear();calc();
+};
+L.add();P.add();S.add();calc();
+</script>
+</body>
+</html>
