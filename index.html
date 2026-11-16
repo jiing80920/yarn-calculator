@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>織造用紗計算機</title>
-<link rel="icon" href="favicon.ico?v=6" sizes="any">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=6">
-<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=6">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=6">
-<link rel="manifest" href="manifest.json?v=6">
+<link rel="icon" href="favicon.ico?v=7" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=7">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=7">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=7">
+<link rel="manifest" href="manifest.json?v=7">
 <meta name="theme-color" content="#2f5d62">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
@@ -86,7 +86,7 @@ details.card[open] summary{margin-bottom:12px}
 <h1>織造用紗計算機</h1>
 <p class="sub">依序填入數值，結果會即時更新。</p>
 
-<details class="card" open>
+<details class="card">
 <summary>① 理論耗紗量（緯紗用） <span class="badge" id="b0"></span></summary>
 <div class="sub2">劍帶</div>
 <div class="row">
@@ -128,10 +128,19 @@ details.card[open] summary{margin-bottom:12px}
 
 <section class="card final">
 <h2>④ 剩餘未領量</h2>
-<label>領用紗量 (kg)（可多筆）</label>
-<div id="pulls"></div>
-<button class="add" id="addL" type="button">＋ 新增一筆領用</button>
-<div class="f" id="pullSum">領用合計：0 kg</div>
+<label>領用紗量 (kg)</label>
+<div class="kp">
+<div class="kp-top"><div class="kp-disp" id="lDisp">0</div><button class="kp-add" id="lAdd" type="button">新增</button></div>
+<div class="kp-grid" id="lGrid">
+<button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+<button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+<button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+<button type="button" data-k="clr">清空</button><button type="button" data-k="0">0</button><button type="button" data-k="del">刪除</button>
+</div>
+<div class="kp-stats"><div><small>累計領用紗量</small><b id="lTotal">0</b></div><div><small>領用紀錄筆數</small><b id="lCount">0</b></div></div>
+<div class="kp-list" id="lList"></div>
+<button class="kp-clear" id="lClear" type="button">清除全部領用紀錄</button>
+</div>
 <div class="res"><span>剩餘未領量</span><b id="o3">—</b></div>
 <div class="tag" id="tag3"></div>
 <button class="clr" type="button" data-clr="3">清除此項資料</button>
@@ -216,7 +225,7 @@ function mkList(box,ph){
   };
   return {add,vals:()=>[...box.querySelectorAll('input')].map(i=>num(i.value)||0),clear:()=>{box.innerHTML='';add()}};
 }
-const L=mkList($('pulls'),'領用量 (kg)'),P=mkPad('k'),S=mkPad('s');
+const L=mkPad('l'),P=mkPad('k'),S=mkPad('s');
 
 function mkPad(p){
   const recs=[];let buf='';
@@ -268,7 +277,7 @@ function calc(){
   $('b2').textContent=need===null?'':kg(need);
   // ③ 剩餘未領量 = 領用 − 所需
   const pull=sum(L.vals());
-  $('pullSum').textContent='領用合計：'+kg(pull);
+  $('lTotal').textContent=fmt(pull);$('lCount').textContent=L.vals().length;
   const rem=need!==null?pull-need:null;
   $('o3').textContent=kg(rem);
   if(rem===null)setTag($('tag3'),'','');
@@ -308,7 +317,6 @@ function calc(){
 });
 $('qty').addEventListener('input',()=>{qtyManual=$('qty').value.trim()!==''});
 ['sd','sp','wd','wp','len','shr','qty','wy'].forEach(id=>$(id).addEventListener('input',calc));
-$('addL').onclick=()=>{L.add().focus()};
 const clr={
   0:()=>{['sd','sp','wd','wp'].forEach(id=>$(id).value='')},
   1:()=>{$('len').value='';$('shr').value=''},
