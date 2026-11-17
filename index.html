@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>織造用紗計算機</title>
-<link rel="icon" href="favicon.ico?v=7" sizes="any">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=7">
-<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=7">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=7">
-<link rel="manifest" href="manifest.json?v=7">
+<link rel="icon" href="favicon.ico?v=10" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=10">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png?v=10">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=10">
+<link rel="manifest" href="manifest.json?v=10">
 <meta name="theme-color" content="#2f5d62">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
@@ -52,6 +52,8 @@ button.cp{padding:9px 10px;color:var(--accent)}
 .kp-disp{flex:1;min-width:0;text-align:right;font-size:1.8rem;padding:8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-variant-numeric:tabular-nums;overflow:hidden}
 button.kp-add{background:var(--accent);color:var(--accent-t);border-color:var(--accent);font-size:1.1rem;font-weight:700;padding:0 22px;border-radius:12px}
 .kp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kp-grid button[data-k="."]{font-size:1.8rem;font-weight:700}
+button.kp-clr{font-size:1.05rem;padding:0 16px;border-radius:12px;background:var(--bg)}
 .kp-grid button{font-size:1.3rem;padding:14px 0;border-radius:12px;background:var(--bg)}
 .kp-grid button:active{background:var(--res)}
 .kp-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -105,7 +107,7 @@ details.card[open] summary{margin-bottom:12px}
 <button class="clr" type="button" data-clr="0">清除此項資料</button>
 </details>
 
-<details class="card" open>
+<details class="card">
 <summary>② 成品長度 <span class="badge" id="b1"></span></summary>
 <div class="row">
 <div><label for="len">盤頭長 (碼)</label><input id="len" type="number" inputmode="decimal" step="any" placeholder="例：1000"></div>
@@ -116,7 +118,7 @@ details.card[open] summary{margin-bottom:12px}
 <button class="clr" type="button" data-clr="1">清除此項資料</button>
 </details>
 
-<details class="card" open>
+<details class="card">
 <summary>③ 所需用紗量 <span class="badge" id="b2"></span></summary>
 <div class="row">
 <div><label for="qty">成品數量 (碼)</label><input id="qty" type="number" inputmode="decimal" step="any" placeholder="例：500"></div>
@@ -126,8 +128,8 @@ details.card[open] summary{margin-bottom:12px}
 <button class="clr" type="button" data-clr="2">清除此項資料</button>
 </details>
 
-<section class="card final">
-<h2>④ 剩餘未領量</h2>
+<details class="card final">
+<summary>④ 剩餘未領量 <span class="badge" id="b4"></span></summary>
 <label>領用紗量 (kg)</label>
 <div class="kp">
 <div class="kp-top"><div class="kp-disp" id="lDisp">0</div><button class="kp-add" id="lAdd" type="button">新增</button></div>
@@ -144,10 +146,10 @@ details.card[open] summary{margin-bottom:12px}
 <div class="res"><span>剩餘未領量</span><b id="o3">—</b></div>
 <div class="tag" id="tag3"></div>
 <button class="clr" type="button" data-clr="3">清除此項資料</button>
-</section>
+</details>
 
-<section class="card">
-<h2>⑤ 目前已用紗量</h2>
+<details class="card" open>
+<summary>⑤ 目前已用紗量 <span class="badge" id="b5"></span></summary>
 <label>已生產數量紀錄 (碼)</label>
 <div class="kp">
 <div class="kp-top"><div class="kp-disp" id="kDisp">0</div><button class="kp-add" id="kAdd" type="button">新增</button></div>
@@ -183,7 +185,7 @@ details.card[open] summary{margin-bottom:12px}
 <div class="res"><span>實際用紗量</span><b id="o4d">—</b></div>
 </div>
 <button class="clr" type="button" data-clr="4">清除此項資料</button>
-</section>
+</details>
 
 <details class="card" id="cmp">
 <summary>⑥ 數值總覽 <span id="cmpBadge"></span></summary>
@@ -229,18 +231,24 @@ const L=mkPad('l'),P=mkPad('k'),S=mkPad('s');
 
 function mkPad(p){
   const recs=[];let buf='';
+  const g=$(p+'Grid');
+  const c=g.querySelector('[data-k="clr"]'),z=g.querySelector('[data-k="0"]');
+  c.className='kp-clr';$(p+'Add').insertAdjacentElement('beforebegin',c);
+  c.addEventListener('click',()=>{buf='';show()});
+  z.insertAdjacentHTML('beforebegin','<button type="button" data-k=".">.</button>');
   const p2=n=>String(n).padStart(2,'0');
   const ts=()=>{const d=new Date();return d.getFullYear()+'/'+p2(d.getMonth()+1)+'/'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes())+':'+p2(d.getSeconds())};
   const show=()=>{$(p+'Disp').textContent=buf===''?'0':buf};
   const render=()=>{
-    $(p+'List').innerHTML=recs.map((r,i)=>'<div class="kp-rec"><div><b>第 '+(i+1)+' 筆　'+r.v.toLocaleString('zh-TW')+'</b><small>'+r.t+'</small></div><div class="kp-ops"><button type="button" data-a="cp" data-i="'+i+'">複製</button><button type="button" class="del" data-a="rm" data-i="'+i+'">刪除</button></div></div>').join('');
+    $(p+'List').innerHTML=recs.map((r,i)=>'<div class="kp-rec"><div><b>第 '+(i+1)+' 筆　'+r.v.toLocaleString('zh-TW',{maximumFractionDigits:4})+'</b><small>'+r.t+'</small></div><div class="kp-ops"><button type="button" data-a="cp" data-i="'+i+'">複製</button><button type="button" class="del" data-a="rm" data-i="'+i+'">刪除</button></div></div>').join('');
   };
   $(p+'Grid').addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b)return;
     const k=b.dataset.k;
     if(k==='clr')buf='';
     else if(k==='del')buf=buf.slice(0,-1);
-    else if(buf.length<9&&!(k==='0'&&buf===''))buf+=k;
+    else if(k==='.'){if(!buf.includes('.')&&buf.length<9)buf=(buf===''?'0':buf)+'.'}
+    else if(buf.length<10){if(buf==='0')buf=k;else if(!(k==='0'&&buf===''))buf+=k}
     show();
   });
   $(p+'List').addEventListener('click',e=>{
@@ -250,7 +258,7 @@ function mkPad(p){
     else recs.splice(i+1,0,{v:recs[i].v,t:ts()});
     render();calc();
   });
-  $(p+'Add').onclick=()=>{const v=parseInt(buf,10);if(v>0){recs.push({v,t:ts()});buf='';show();render();calc()}};
+  $(p+'Add').onclick=()=>{const v=parseFloat(buf);if(v>0){recs.push({v,t:ts()});buf='';show();render();calc()}};
   $(p+'Clear').onclick=()=>{recs.length=0;buf='';show();render();calc()};
   return {add(){},vals:()=>recs.map(r=>r.v),clear(){recs.length=0;buf='';show();render()}};
 }
@@ -280,6 +288,7 @@ function calc(){
   $('lTotal').textContent=fmt(pull);$('lCount').textContent=L.vals().length;
   const rem=need!==null?pull-need:null;
   $('o3').textContent=kg(rem);
+  $('b4').textContent=rem===null?'':kg(rem);
   if(rem===null)setTag($('tag3'),'','');
   else if(r4(rem)<0)setTag($('tag3'),'尚欠領 '+kg(-rem),'warn');
   else if(r4(rem)===0)setTag($('tag3'),'剛好領足','ok');
@@ -290,6 +299,7 @@ function calc(){
   const used=(w!==null)?made*w:null;
   const left=used!==null?pull-used:null;
   $('o4a').textContent=kg(used);
+  $('b5').textContent=used===null?'':'已用 '+kg(used);
   $('o4b').textContent=kg(left);
   const stk=sum(S.vals());
   $('sTotal').textContent=fmt(stk);$('sCount').textContent=S.vals().length;
